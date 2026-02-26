@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import Groq from "groq-sdk";
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Sparkles, Send, Loader2, Search, Copy, Check, BrainCircuit } from 'lucide-react';
 
 const AiSearch: React.FC = () => {
@@ -34,7 +36,7 @@ const AiSearch: React.FC = () => {
         messages: [
           {
             role: "system",
-            content: "Tu es un assistant pédagogique expert. Aide les enseignants à créer des contenus d'évaluation de haute qualité. Réponds de manière structurée en utilisant le format Markdown."
+            content: "Tu es un assistant pédagogique expert. Aide les enseignants à créer des contenus d'évaluation de haute qualité. Réponds de manière structurée en utilisant le format Markdown. Pour les formules mathématiques et scientifiques, utilise TOUJOURS le format LaTeX avec les délimiteurs '$' pour les formules en ligne et '$$' pour les formules en bloc. Assure-toi que les formules complexes sont bien lisibles."
           },
           {
             role: "user",
@@ -118,7 +120,12 @@ const AiSearch: React.FC = () => {
             </button>
             
             <div className="markdown-body prose prose-slate max-w-none">
-              <Markdown remarkPlugins={[remarkGfm]}>{response}</Markdown>
+              <Markdown 
+                remarkPlugins={[remarkGfm, remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
+              >
+                {response}
+              </Markdown>
             </div>
           </div>
         </div>
