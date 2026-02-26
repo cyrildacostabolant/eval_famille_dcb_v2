@@ -298,8 +298,11 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
 
               {/* Pied de page compact */}
               <div className="mt-auto border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 font-medium" style={{ height: `${FOOTER_HEIGHT}px`, flexShrink: 0 }}>
-                <span className="uppercase tracking-widest truncate max-w-[75%] font-bold">{evaluation.title}</span>
-                <span className="font-bold whitespace-nowrap">Page {page.pageNumber} / {pages.length}</span>
+                <span className="uppercase tracking-widest truncate max-w-[30%] font-bold">{evaluation.title}</span>
+                <div className="flex-grow flex justify-center">
+                   <span className="font-bold text-slate-600 text-[10px]">..... / {page.items.reduce((acc, item) => item.type === 'question' ? acc + (item.points || 0) : acc, 0)}</span>
+                </div>
+                <span className="font-bold whitespace-nowrap w-[30%] text-right">Page {page.pageNumber} / {pages.length}</span>
               </div>
             </div>
           </div>
