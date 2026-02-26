@@ -17,6 +17,7 @@ const EvaluationEditor: React.FC<EvaluationEditorProps> = ({ evaluationId, onClo
     id: evaluationId || crypto.randomUUID(),
     title: '',
     category_id: '',
+    is_archived: false,
     questions: []
   });
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ const EvaluationEditor: React.FC<EvaluationEditorProps> = ({ evaluationId, onClo
              ...q,
              points: q.points ?? 2
           }));
+          safeEval.is_archived = safeEval.is_archived ?? false;
           setEvaluation(safeEval);
           // Par défaut, on étend toutes les questions au chargement
           setExpandedIds(new Set(safeEval.questions.map((q: any) => q.id)));

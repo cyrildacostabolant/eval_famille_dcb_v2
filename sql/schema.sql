@@ -17,6 +17,7 @@ create table evaluations (
   user_id uuid default auth.uid(),
   category_id uuid references categories(id) on delete set null,
   title text not null,
+  is_archived boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

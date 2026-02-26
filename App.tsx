@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, Evaluation, Category } from './types';
 import { dataService } from './services/supabaseClient';
-import { LayoutGrid, FilePlus, BookOpen, Clock, Tags, FileText, GraduationCap, X, Trash2, AlertTriangle, ChevronRight, Sparkles } from 'lucide-react';
+import { LayoutGrid, FilePlus, BookOpen, Clock, Tags, FileText, GraduationCap, X, Trash2, AlertTriangle, ChevronRight, Sparkles, Archive, ArchiveRestore } from 'lucide-react';
 
 import CategoryManager from './components/CategoryManager';
 import EvaluationEditor from './components/EvaluationEditor';
@@ -58,6 +58,15 @@ function App() {
     }
   };
 
+  const handleToggleArchive = async (id: string, currentStatus: boolean) => {
+    try {
+      await dataService.toggleArchiveEvaluation(id, !currentStatus);
+      await loadData();
+    } catch (error) {
+      console.error("Error toggling archive status:", error);
+    }
+  };
+
   const renderDashboard = () => (
     <div className="max-w-[1600px] mx-auto p-6 md:p-8 animate-fade-in">
       <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -94,7 +103,7 @@ function App() {
       ) : (
         <div className="space-y-8">
           {categories.map(cat => {
-            const catEvals = evaluations.filter(e => e.category_id === cat.id);
+            const catEvals = evaluations.filter(e => e.category_id === cat.id && !e.is_archived);
             if (catEvals.length === 0) return null;
 
             return (
@@ -122,18 +131,130 @@ function App() {
                         <div className="p-1.5 bg-slate-50 rounded-lg text-slate-400 group-hover:text-indigo-500 transition-colors">
                           <FileText size={16} />
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteModalOpen(ev);
-                          }}
-                          className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleArchive(ev.id, ev.is_archived || false);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Archiver"
+                          >
+                            <Archive size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteModalOpen(ev);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
 
                       <h3 className="font-bold text-base text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2">
+                        {ev.title}
+                      </h3>
+                      
+                      <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-50">
+                        <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
+                          <div className="flex items-center gap-1">
+                            <Clock size={12} />
+                            <span>{new Date(ev.created_at || '').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                          </div>
+                          <span>•</span>
+                          <span>{ev.questions.length} quest.</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderArchives = () => (
+    <div className="max-w-[1600px] mx-auto p-6 md:p-8 animate-fade-in">
+      <header className="mb-8">
+        <div className="flex items-center gap-2 text-amber-600 font-bold mb-1">
+          <Archive size={16} />
+          <span className="uppercase tracking-wider text-[10px]">Espace Famille DCB</span>
+        </div>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Archives</h1>
+        <p className="text-slate-500 mt-1">Retrouvez ici vos anciens questionnaires archivés.</p>
+      </header>
+
+      {evaluations.filter(e => e.is_archived).length === 0 ? (
+        <div className="text-center p-12 bg-white rounded-3xl border-2 border-dashed border-slate-200 mt-8">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+            <Archive size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Aucune archive</h2>
+          <p className="text-slate-500 max-w-sm mx-auto text-sm">Vos questionnaires archivés apparaîtront ici.</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {categories.map(cat => {
+            const catEvals = evaluations.filter(e => e.category_id === cat.id && e.is_archived);
+            if (catEvals.length === 0) return null;
+
+            return (
+              <div key={cat.id} className="animate-fade-in">
+                <div className="flex items-center justify-between mb-3 group cursor-default">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 rounded-full" style={{ backgroundColor: cat.color }}></div>
+                    <h2 className="text-xl font-extrabold text-slate-800">{cat.name}</h2>
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold uppercase tracking-widest">
+                      {catEvals.length}
+                    </span>
+                  </div>
+                  <div className="h-px flex-grow mx-4 bg-slate-100"></div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {catEvals.map(ev => (
+                    <div 
+                      key={ev.id} 
+                      className="group relative bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all cursor-pointer flex flex-col h-full opacity-75 hover:opacity-100"
+                      style={{ borderLeft: `4px solid ${cat.color}` }}
+                      onClick={() => handleEditEvaluation(ev.id)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="p-1.5 bg-slate-50 rounded-lg text-slate-400 group-hover:text-amber-500 transition-colors">
+                          <Archive size={16} />
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleArchive(ev.id, ev.is_archived || false);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Restaurer"
+                          >
+                            <ArchiveRestore size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteModalOpen(ev);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <h3 className="font-bold text-base text-slate-800 mb-2 group-hover:text-amber-600 transition-colors leading-tight line-clamp-2">
                         {ev.title}
                       </h3>
                       
@@ -184,6 +305,14 @@ function App() {
               <Tags size={20} className={`${activeTab === 'categories' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
               <span className="text-[9px] font-bold uppercase tracking-wider">Matières</span>
             </button>
+            <button
+              onClick={() => setActiveTab('archives')}
+              className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${activeTab === 'archives' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+              title="Archives"
+            >
+              <Archive size={20} className={`${activeTab === 'archives' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">Archives</span>
+            </button>
           </div>
           
           <div className="mt-auto mb-4 text-slate-300 font-black text-[10px] vertical-text tracking-[0.2em] opacity-50">
@@ -196,6 +325,7 @@ function App() {
         {/* Wrapper pour masquer le contenu d'arrière-plan à l'impression */}
         <div className="print:hidden">
           {activeTab === 'dashboard' && renderDashboard()}
+          {activeTab === 'archives' && renderArchives()}
           
           {activeTab === 'categories' && (
             <div className="p-8">

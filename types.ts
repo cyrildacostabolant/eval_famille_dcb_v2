@@ -22,7 +22,8 @@ export interface Evaluation {
   title: string;
   category_id: string;
   created_at?: string;
+  is_archived?: boolean;
   questions: Question[];
 }
 
-export type Tab = 'dashboard' | 'categories' | 'editor' | 'preview';
+export type Tab = 'dashboard' | 'categories' | 'editor' | 'preview' | 'archives';

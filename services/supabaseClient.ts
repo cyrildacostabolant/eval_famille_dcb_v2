@@ -152,6 +152,7 @@ export const dataService = {
         id: evaluation.id.length < 10 ? undefined : evaluation.id,
         title: evaluation.title,
         category_id: evaluation.category_id,
+        is_archived: evaluation.is_archived ?? false,
       }).select().single();
 
       if (error || !evalData) throw error;
@@ -191,6 +192,22 @@ export const dataService = {
       return;
     }
     MOCK_EVALUATIONS = MOCK_EVALUATIONS.filter(e => e.id !== id);
+    return Promise.resolve();
+  },
+
+  toggleArchiveEvaluation: async (id: string, isArchived: boolean): Promise<void> => {
+    if (supabase) {
+      const { error } = await supabase
+        .from('evaluations')
+        .update({ is_archived: isArchived })
+        .eq('id', id);
+      if (error) throw error;
+      return;
+    }
+    const index = MOCK_EVALUATIONS.findIndex(e => e.id === id);
+    if (index > -1) {
+      MOCK_EVALUATIONS[index].is_archived = isArchived;
+    }
     return Promise.resolve();
   }
 };
