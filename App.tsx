@@ -7,7 +7,6 @@ import { LayoutGrid, FilePlus, BookOpen, Clock, Tags, FileText, GraduationCap, X
 import CategoryManager from './components/CategoryManager';
 import EvaluationEditor from './components/EvaluationEditor';
 import PdfPreview from './components/PdfPreview';
-import GeminiSearch from './components/GeminiSearch';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -314,14 +313,6 @@ function App() {
               <Archive size={20} className={`${activeTab === 'archives' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
               <span className="text-[9px] font-bold uppercase tracking-wider">Archives</span>
             </button>
-            <button
-              onClick={() => setActiveTab('gemini')}
-              className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${activeTab === 'gemini' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
-              title="Gemini"
-            >
-              <Sparkles size={20} className={`${activeTab === 'gemini' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
-              <span className="text-[9px] font-bold uppercase tracking-wider">Gemini</span>
-            </button>
           </div>
           
           <div className="mt-auto mb-4 text-slate-300 font-black text-[10px] vertical-text tracking-[0.2em] opacity-50">
@@ -335,7 +326,6 @@ function App() {
         <div className="print:hidden">
           {activeTab === 'dashboard' && renderDashboard()}
           {activeTab === 'archives' && renderArchives()}
-          {activeTab === 'gemini' && <GeminiSearch />}
           
           {activeTab === 'categories' && (
             <div className="p-8">

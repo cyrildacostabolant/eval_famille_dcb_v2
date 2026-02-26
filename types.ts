@@ -26,4 +26,4 @@ export interface Evaluation {
   questions: Question[];
 }
 
-export type Tab = 'dashboard' | 'categories' | 'editor' | 'preview' | 'archives' | 'gemini';
+export type Tab = 'dashboard' | 'categories' | 'editor' | 'preview' | 'archives';
