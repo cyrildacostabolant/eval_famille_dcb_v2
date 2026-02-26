@@ -127,7 +127,7 @@ const SettingsPage: React.FC = () => {
       </div>
       
       <div className="mt-8 pt-8 border-t text-sm text-gray-400">
-        <p>Astuce : Créez les tables SQL fournies dans l'onglet "Dashboard" > "SQL Editor" de Supabase avant de connecter.</p>
+        <p>Astuce : Créez les tables SQL fournies dans l'onglet "Dashboard" &gt; "SQL Editor" de Supabase avant de connecter.</p>
       </div>
     </div>
   );
