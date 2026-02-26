@@ -175,14 +175,7 @@ function App() {
               <LayoutGrid size={20} className={`${activeTab === 'dashboard' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
               <span className="text-[9px] font-bold uppercase tracking-wider">Accueil</span>
             </button>
-            <button
-              onClick={() => handleEditEvaluation(null)}
-              className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${activeTab === 'editor' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
-              title="Nouveau"
-            >
-              <FilePlus size={20} className={`${activeTab === 'editor' ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
-              <span className="text-[9px] font-bold uppercase tracking-wider">Créer</span>
-            </button>
+
             <button
               onClick={() => setActiveTab('categories')}
               className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${activeTab === 'categories' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
