@@ -8,7 +8,12 @@ interface CategoryManagerProps {
   onBack: () => void;
 }
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#334155'];
+const COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#334155', '#3b82f6',
+  '#0ea5e9', '#14b8a6', '#10b981', '#84cc16', '#f59e0b', '#ef4444', '#d946ef', '#a855f7', '#6b7280', '#71717a',
+  '#737373', '#78716c', '#800000', '#808000', '#000080', '#a52a2a', '#ff7f50', '#ffd700', '#c0c0c0', '#40e0d0',
+  '#e6e6fa', '#fa8072'
+];
 
 const CategoryManager: React.FC<CategoryManagerProps> = ({ onBack }) => {
   const [categories, setCategories] = useState<Category[]>([]);
