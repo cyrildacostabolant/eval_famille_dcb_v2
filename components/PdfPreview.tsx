@@ -76,13 +76,10 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
 
     const timer = setTimeout(() => {
       const computedPages: Page[] = [];
-      let currentPageItems: PageItem[] = [];
-      let currentHeight = 0;
-      let pageIndex = 1;
-      
-      let maxPageHeight = CONTENT_HEIGHT_P1;
       const elements = Array.from(measureContainerRef.current!.children) as HTMLElement[];
       
+      // 1. Pre-measure all items
+      const allItems: PageItem[] = [];
       for (let i = 0; i < elements.length; i++) {
         const el = elements[i];
         const type = el.dataset.type as PageItemType;
@@ -100,19 +97,39 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
           const qId = el.dataset.id;
           itemData = evaluation.questions.find(q => q.id === qId);
           itemPoints = parseFloat(el.dataset.points || '0');
-          
-          // La mesure el.offsetHeight est maintenant fiable car le ghost 
-          // affiche le contenu exact correspondant au mode (student/teacher)
           itemHeight = el.offsetHeight + 12; // mb-3
 
-          // On récupère la hauteur des lignes pointillées si elles ont été mesurées
           const dottedEl = el.querySelector('.measure-dotted-area') as HTMLElement;
           if (dottedEl) {
             dottedH = dottedEl.offsetHeight;
           }
         }
 
-        if (currentHeight + itemHeight > maxPageHeight && currentPageItems.length > 0) {
+        allItems.push({
+          type, data: itemData, height: itemHeight, dottedLinesHeight: dottedH, points: itemPoints
+        });
+      }
+
+      // 2. Distribute items into pages with orphan protection
+      let currentPageItems: PageItem[] = [];
+      let currentHeight = 0;
+      let pageIndex = 1;
+      let maxPageHeight = CONTENT_HEIGHT_P1;
+
+      for (let i = 0; i < allItems.length; i++) {
+        const item = allItems[i];
+        let shouldBreak = currentHeight + item.height > maxPageHeight;
+
+        // Orphan section protection: if this is a section title, 
+        // ensure at least the next item (the first question) also fits.
+        if (!shouldBreak && item.type === 'section' && i < allItems.length - 1) {
+          const nextItem = allItems[i+1];
+          if (currentHeight + item.height + nextItem.height > maxPageHeight) {
+            shouldBreak = true;
+          }
+        }
+
+        if (shouldBreak && currentPageItems.length > 0) {
           computedPages.push({ pageNumber: pageIndex, items: currentPageItems });
           pageIndex++;
           currentPageItems = [];
@@ -120,10 +137,8 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
           maxPageHeight = CONTENT_HEIGHT_PN;
         }
 
-        currentPageItems.push({
-          type, data: itemData, height: itemHeight, dottedLinesHeight: dottedH, points: itemPoints
-        });
-        currentHeight += itemHeight;
+        currentPageItems.push(item);
+        currentHeight += item.height;
       }
 
       if (currentPageItems.length > 0) {
