@@ -167,7 +167,9 @@ export const dataService = {
           teacher_answer: q.teacher_answer,
           student_prompt: q.student_prompt,
           order_index: idx,
-          points: q.points || 2
+          points: q.points || 2,
+          is_mcq: q.is_mcq || false,
+          mcq_options: q.mcq_options || []
         }));
 
         const { error: qError } = await supabase.from('questions').insert(questionsToInsert);

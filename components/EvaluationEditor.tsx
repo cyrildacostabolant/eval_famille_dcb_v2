@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Category, Evaluation, Question } from '../types';
 import { dataService } from '../services/supabaseClient';
 import RichTextEditor from './RichTextEditor';
-import { Plus, Trash2, ArrowLeft, GripVertical, FileText, CheckCircle, AlertCircle, X, Sparkles, Layout, Layers, Calculator, Save, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, GripVertical, FileText, CheckCircle, AlertCircle, X, Sparkles, Layout, Layers, Calculator, Save, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp, CheckSquare, Square, ListTodo } from 'lucide-react';
 
 interface EvaluationEditorProps {
   evaluationId?: string | null;
@@ -97,6 +97,56 @@ const EvaluationEditor: React.FC<EvaluationEditorProps> = ({ evaluationId, onClo
   const updateQuestion = (index: number, field: keyof Question, value: any) => {
     const updated = [...evaluation.questions];
     updated[index] = { ...updated[index], [field]: value };
+    setEvaluation(prev => ({ ...prev, questions: updated }));
+  };
+
+  const toggleMcq = (index: number) => {
+    const updated = [...evaluation.questions];
+    const q = updated[index];
+    const isMcq = !q.is_mcq;
+    
+    updated[index] = { 
+      ...q, 
+      is_mcq: isMcq,
+      mcq_options: isMcq ? (q.mcq_options || [
+        { id: crypto.randomUUID(), text: '', is_correct: false },
+        { id: crypto.randomUUID(), text: '', is_correct: false }
+      ]) : q.mcq_options
+    };
+    setEvaluation(prev => ({ ...prev, questions: updated }));
+  };
+
+  const addMcqOption = (qIndex: number) => {
+    const updated = [...evaluation.questions];
+    const q = updated[qIndex];
+    if (!q.mcq_options) return;
+    
+    updated[qIndex] = {
+      ...q,
+      mcq_options: [...q.mcq_options, { id: crypto.randomUUID(), text: '', is_correct: false }]
+    };
+    setEvaluation(prev => ({ ...prev, questions: updated }));
+  };
+
+  const updateMcqOption = (qIndex: number, oIndex: number, field: string, value: any) => {
+    const updated = [...evaluation.questions];
+    const q = updated[qIndex];
+    if (!q.mcq_options) return;
+    
+    const options = [...q.mcq_options];
+    options[oIndex] = { ...options[oIndex], [field]: value };
+    
+    updated[qIndex] = { ...q, mcq_options: options };
+    setEvaluation(prev => ({ ...prev, questions: updated }));
+  };
+
+  const removeMcqOption = (qIndex: number, oIndex: number) => {
+    const updated = [...evaluation.questions];
+    const q = updated[qIndex];
+    if (!q.mcq_options || q.mcq_options.length <= 2) return;
+    
+    const options = q.mcq_options.filter((_, i) => i !== oIndex);
+    updated[qIndex] = { ...q, mcq_options: options };
     setEvaluation(prev => ({ ...prev, questions: updated }));
   };
 
@@ -317,7 +367,16 @@ const EvaluationEditor: React.FC<EvaluationEditorProps> = ({ evaluationId, onClo
                 <div className="p-4 space-y-4 bg-white">
                   {/* Question Input */}
                   <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 ml-1">Énoncé</label>
+                    <div className="flex justify-between items-center mb-1 ml-1">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Énoncé</label>
+                      <button
+                        onClick={() => toggleMcq(idx)}
+                        className={`text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-1 ${q.is_mcq ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`}
+                      >
+                        <ListTodo size={12} />
+                        {q.is_mcq ? 'Mode Classique' : 'Mode QCM'}
+                      </button>
+                    </div>
                     <textarea
                       ref={(el) => { textareaRefs.current[idx] = el; }}
                       className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/30 focus:bg-white outline-none overflow-hidden min-h-[60px] font-medium text-slate-700 transition-all leading-relaxed resize-none text-sm"
@@ -328,6 +387,45 @@ const EvaluationEditor: React.FC<EvaluationEditorProps> = ({ evaluationId, onClo
                       onChange={(e) => updateQuestion(idx, 'question_text', e.target.value)}
                       style={{ height: 'auto' }} 
                     />
+
+                    {q.is_mcq && q.mcq_options && (
+                      <div className="mt-4 p-4 bg-indigo-50/30 rounded-xl border border-indigo-100 space-y-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Options du QCM</span>
+                          <button 
+                            onClick={() => addMcqOption(idx)}
+                            className="text-[10px] font-bold text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded transition-all flex items-center gap-1"
+                          >
+                            <Plus size={12} /> Ajouter une option
+                          </button>
+                        </div>
+                        {q.mcq_options.map((opt, oIdx) => (
+                          <div key={opt.id} className="flex items-center gap-3 animate-fade-in">
+                            <button 
+                              onClick={() => updateMcqOption(idx, oIdx, 'is_correct', !opt.is_correct)}
+                              className={`p-2 rounded-lg transition-all ${opt.is_correct ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-slate-300 border border-slate-200'}`}
+                              title={opt.is_correct ? "Réponse correcte" : "Marquer comme correct"}
+                            >
+                              {opt.is_correct ? <CheckSquare size={16} /> : <Square size={16} />}
+                            </button>
+                            <input 
+                              type="text"
+                              value={opt.text}
+                              onChange={(e) => updateMcqOption(idx, oIdx, 'text', e.target.value)}
+                              placeholder={`Option ${oIdx + 1}`}
+                              className="flex-grow p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-indigo-300 transition-all"
+                            />
+                            <button 
+                              onClick={() => removeMcqOption(idx, oIdx)}
+                              disabled={q.mcq_options!.length <= 2}
+                              className="p-2 text-slate-300 hover:text-rose-500 disabled:opacity-30 transition-all"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid lg:grid-cols-2 gap-4">

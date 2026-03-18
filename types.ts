@@ -6,6 +6,12 @@ export interface Category {
   user_id?: string;
 }
 
+export interface McqOption {
+  id: string;
+  text: string;
+  is_correct: boolean;
+}
+
 export interface Question {
   id: string;
   evaluation_id?: string;
@@ -15,6 +21,8 @@ export interface Question {
   student_prompt: string | null; // HTML or null for dotted lines
   order_index: number;
   points: number;
+  is_mcq?: boolean;
+  mcq_options?: McqOption[];
 }
 
 export interface Evaluation {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Evaluation, Category, Question } from '../types';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, CheckSquare, Square } from 'lucide-react';
 
 interface PdfPreviewProps {
   evaluation: Evaluation;
@@ -154,32 +154,56 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
 
   const renderRealQuestion = (q: Question, dottedHeight?: number, points?: number) => {
     const numberOfLines = dottedHeight ? Math.floor(dottedHeight / 30) : 1;
+    
+    // Logic for MCQ mention
+    const correctCount = q.is_mcq ? (q.mcq_options?.filter(opt => opt.is_correct).length || 0) : 0;
+    const mcqMention = correctCount > 1 ? " (Plusieurs réponses possibles)" : "";
+
     return (
     <div className="mb-3 pl-2 page-item-container">
       <div className="mb-2 text-blue-900 flex justify-between items-start gap-4">
         <div className="measure-question-text flex-grow font-bold" style={contentStyle}>
-          {q.question_text}
+          {q.question_text}{mcqMention}
         </div>
         {points !== undefined && points > 0 && (
            <div className="font-bold text-slate-400 text-sm whitespace-nowrap pt-1">/ {points}</div>
         )}
       </div>
       <div className="pl-2">
-        {mode === 'teacher' ? (
-          <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-900 editor-content rounded-r-lg"
-               style={contentStyle} dangerouslySetInnerHTML={{ __html: q.teacher_answer }} />
-        ) : (
-          <>
-            {q.student_prompt ? (
-               <div className="editor-content" style={contentStyle} dangerouslySetInnerHTML={{ __html: q.student_prompt }} />
-            ) : (
-              <div className="w-full flex flex-col">
-                {Array.from({ length: Math.max(1, numberOfLines) }).map((_, i) => (
-                  <div key={i} className="w-full border-b border-black" style={{ height: '30px', flexShrink: 0 }}></div>
-                ))}
+        {q.is_mcq && q.mcq_options ? (
+          <div className="space-y-2 mt-2">
+            {q.mcq_options.map((opt) => (
+              <div key={opt.id} className="flex items-start gap-3">
+                <div className="mt-1 flex-shrink-0">
+                  {mode === 'teacher' && opt.is_correct ? (
+                    <CheckSquare size={16} className="text-green-600" />
+                  ) : (
+                    <Square size={16} className="text-slate-300" />
+                  )}
+                </div>
+                <div style={contentStyle} className={mode === 'teacher' && opt.is_correct ? 'text-green-700 font-bold' : 'text-slate-700'}>
+                  {opt.text}
+                </div>
               </div>
-            )}
-          </>
+            ))}
+          </div>
+        ) : (
+          mode === 'teacher' ? (
+            <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-900 editor-content rounded-r-lg"
+                 style={contentStyle} dangerouslySetInnerHTML={{ __html: q.teacher_answer }} />
+          ) : (
+            <>
+              {q.student_prompt ? (
+                 <div className="editor-content" style={contentStyle} dangerouslySetInnerHTML={{ __html: q.student_prompt }} />
+              ) : (
+                <div className="w-full flex flex-col">
+                  {Array.from({ length: Math.max(1, numberOfLines) }).map((_, i) => (
+                    <div key={i} className="w-full border-b border-black" style={{ height: '30px', flexShrink: 0 }}></div>
+                  ))}
+                </div>
+              )}
+            </>
+          )
         )}
       </div>
     </div>
@@ -206,41 +230,26 @@ const PdfPreview: React.FC<PdfPreviewProps> = ({ evaluation, category, mode, onC
                 </div>
             </div>
             {evaluation.questions.filter(q => (q.section_name || 'Autre') === section).map(q => {
-               // Calcul du nombre de lignes pour le mode élève sans prompt
-               const tempDiv = document.createElement('div');
-               tempDiv.style.width = '190mm'; // Largeur estimée contenu
-               tempDiv.style.fontSize = '13pt';
-               tempDiv.style.lineHeight = '1.4';
-               tempDiv.innerHTML = q.teacher_answer;
-               document.body.appendChild(tempDiv);
-               const h = tempDiv.offsetHeight;
-               document.body.removeChild(tempDiv);
-               
-               // On ajoute la ligne supplémentaire (+ 1) comme demandé pour le confort d'écriture
-               const lines = Math.max(1, Math.ceil(h / 30) + 1);
-               const dottedH = lines * 30;
+               let dottedH = 0;
+               if (!q.is_mcq && !q.student_prompt) {
+                 // Calcul du nombre de lignes pour le mode élève sans prompt
+                 const tempDiv = document.createElement('div');
+                 tempDiv.style.width = '190mm'; // Largeur estimée contenu
+                 tempDiv.style.fontSize = '13pt';
+                 tempDiv.style.lineHeight = '1.4';
+                 tempDiv.innerHTML = q.teacher_answer;
+                 document.body.appendChild(tempDiv);
+                 const h = tempDiv.offsetHeight;
+                 document.body.removeChild(tempDiv);
+                 
+                 // On ajoute la ligne supplémentaire (+ 1) comme demandé pour le confort d'écriture
+                 const lines = Math.max(1, Math.ceil(h / 30) + 1);
+                 dottedH = lines * 30;
+               }
 
                return (
                 <div key={q.id} data-type="question" data-id={q.id} data-points={q.points}>
-                  <div className="mb-3 pl-2">
-                    <div className="mb-2 text-blue-900 font-bold measure-question-text" style={contentStyle}>{q.question_text}</div>
-                    <div className="pl-2">
-                      {mode === 'teacher' ? (
-                        <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-900 editor-content rounded-r-lg"
-                             style={contentStyle} dangerouslySetInnerHTML={{ __html: q.teacher_answer }} />
-                      ) : (
-                        <>
-                          {q.student_prompt ? (
-                             <div className="editor-content" style={contentStyle} dangerouslySetInnerHTML={{ __html: q.student_prompt }} />
-                          ) : (
-                            <div className="measure-dotted-area w-full flex flex-col" style={{ height: `${dottedH}px` }}>
-                               {/* Espace exact pour les lignes pointillées */}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  {renderRealQuestion(q, dottedH, q.points)}
                 </div>
                );
             })}
